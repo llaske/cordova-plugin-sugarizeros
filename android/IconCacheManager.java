@@ -13,15 +13,26 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.HashSet;
 
-public  class IconCacheManager {
+public class IconCacheManager {
 
-    public static String getIcon(Context context, PackageManager packageManager, String packageName){
+    private static final HashSet<String> isIconCached = new HashSet<String>();
+    private static File cacheDir = null;
+
+    public static String getIcon(Context context, PackageManager packageManager, String packageName) {
+
+        if (cacheDir == null) {
+            cacheDir = context.getCacheDir();
+        }
+
+        if (isIconCached.contains(packageName)) {
+            return cacheDir + "/" + packageName + ".png";
+        }
+
         try {
-            File file = new File(context.getCacheDir(), packageName);
-            if(file.exists())
-                return String.format("%s/%s.png", context.getCacheDir(), packageName);
-
+            isIconCached.add(packageName);
+            File file = new File(cacheDir, packageName);
             Drawable iconDrawable = packageManager.getApplicationIcon(packageName);
             Bitmap bitmap = drawableToBitmap(iconDrawable);
             return bitmapToFile(context, packageName, bitmap);
@@ -32,15 +43,19 @@ public  class IconCacheManager {
     }
 
     public static String bitmapToFile(Context context, String filename, Bitmap bitmap) {
-        File f = new File(context.getCacheDir(), filename+".png");
+        if (cacheDir == null) {
+            cacheDir = context.getCacheDir();
+        }
+
+        File f = new File(cacheDir, filename + ".png");
         try {
             f.createNewFile();
-//Convert bitmap to byte array
+            //Convert bitmap to byte array
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             bitmap.compress(Bitmap.CompressFormat.PNG, 0 /*ignored for PNG*/, bos);
             byte[] bitmapdata = bos.toByteArray();
 
-//write the bytes in file
+            //write the bytes in file
             FileOutputStream fos = null;
             try {
                 fos = new FileOutputStream(f);
@@ -57,7 +72,7 @@ public  class IconCacheManager {
     }
 
 
-    private String drawableToBase64(Drawable drawable){
+    private String drawableToBase64(Drawable drawable) {
         BitmapDrawable bitDw = ((BitmapDrawable) drawable);
         Bitmap bitmap = bitDw.getBitmap();
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
@@ -71,11 +86,11 @@ public  class IconCacheManager {
 
         if (drawable instanceof BitmapDrawable) {
             BitmapDrawable bitmapDrawable = (BitmapDrawable) drawable;
-            if(bitmapDrawable.getBitmap() != null) {
+            if (bitmapDrawable.getBitmap() != null) {
                 return bitmapDrawable.getBitmap();
             }
         }
-        if(drawable.getIntrinsicWidth() <= 0 || drawable.getIntrinsicHeight() <= 0) {
+        if (drawable.getIntrinsicWidth() <= 0 || drawable.getIntrinsicHeight() <= 0) {
             bitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888); // Single color bitmap will be created of 1x1 pixel
         } else {
             bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);

@@ -11,13 +11,13 @@ import org.apache.cordova.PluginResult;
 public class AppsBroadcastReceiver extends BroadcastReceiver {
     private CallbackContext AppsListenerCallBack;
 
-    public void setCallback(CallbackContext callback){
+    public void setCallback(CallbackContext callback) {
         AppsListenerCallBack = callback;
     }
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        String packageName=intent.getData().getEncodedSchemeSpecificPart();
+        String packageName = intent.getData().getEncodedSchemeSpecificPart();
         Log.i("packageName", packageName);
         if (AppsListenerCallBack != null) {
             PluginResult result = new PluginResult(PluginResult.Status.OK, packageName);
