@@ -31,7 +31,6 @@ public class IconCacheManager {
         }
 
         try {
-            isIconCached.add(packageName);
             File file = new File(cacheDir, packageName);
             Drawable iconDrawable = packageManager.getApplicationIcon(packageName);
             Bitmap bitmap = drawableToBitmap(iconDrawable);
@@ -62,6 +61,7 @@ public class IconCacheManager {
                 fos.write(bitmapdata);
                 fos.flush();
                 fos.close();
+                isIconCached.add(filename);
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             }
