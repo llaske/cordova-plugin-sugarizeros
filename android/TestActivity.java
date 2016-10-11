@@ -1,6 +1,7 @@
 package org.olpcfrance.sugarizer;
 
 import android.os.Bundle;
+
 import org.apache.cordova.CordovaActivity;
 
 /**
