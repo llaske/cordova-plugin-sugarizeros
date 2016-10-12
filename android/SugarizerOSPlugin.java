@@ -7,12 +7,8 @@ import android.content.IntentFilter;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
-import android.net.wifi.WifiInfo;
-import android.net.wifi.WifiManager;
-import android.provider.Settings;
 import android.net.Uri;
-import android.telecom.Call;
-import android.util.Log;
+import android.provider.Settings;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaActivity;
@@ -22,17 +18,16 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
 public class SugarizerOSPlugin extends CordovaPlugin {
     private PackageManager pm;
 
-    private void getDefaultLauncherPackageName(CallbackContext callbackContext){
+    private void getDefaultLauncherPackageName(CallbackContext callbackContext) {
         callbackContext.success(getDefaultLauncherPackageName(pm));
     }
-
-
 
     public static String getDefaultLauncherPackageName(PackageManager packageManager) {
         Intent intent = new Intent(Intent.ACTION_MAIN);
@@ -44,7 +39,7 @@ public class SugarizerOSPlugin extends CordovaPlugin {
     public static boolean isMyAppLauncherDefault(Context appContext, PackageManager packageManager) {
         if (packageManager == null)
             packageManager = appContext.getPackageManager();
-         return getDefaultLauncherPackageName(packageManager).equals(appContext.getPackageName());
+        return getDefaultLauncherPackageName(packageManager).equals(appContext.getPackageName());
     }
 
     private HashSet<String> getLauncherApps(PackageManager packageManager) {
@@ -59,35 +54,51 @@ public class SugarizerOSPlugin extends CordovaPlugin {
         return packageNames;
     }
 
-    private void getApps(CallbackContext callbackContext, int flags) {
-        JSONArray output = new JSONArray();
-        CordovaActivity activity = (CordovaActivity) this.cordova.getActivity();
-        final String appPackageName = activity.getPackageName();
-        if (pm == null)
-            pm = activity.getPackageManager();
+    private static final HashMap<String, String> packageNameToName = new HashMap<String, String>();
 
-        HashSet<String> packageNames = getLauncherApps(pm);
-        for (String packageName : packageNames) {
-
-            if (!appPackageName.equals(packageName)) {
-                JSONObject application = new JSONObject();
-                try {
-                    PackageInfo packageInfo = pm.getPackageInfo(packageName, 0);
-                    try {
-                        application.put("packageName", packageName);
-                        application.put("name", pm.getApplicationLabel(pm.getApplicationInfo(packageName, 0)));
-                        application.put("icon", IconCacheManager.getIcon(cordova.getActivity(), pm, packageName));
-                        application.put("version", packageInfo.versionName);
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                } catch (PackageManager.NameNotFoundException e) {
-                    e.printStackTrace();
+    private void getApps(final CallbackContext callbackContext, int flags) {
+        cordova.getThreadPool().execute(new Runnable() {
+            @Override
+            public void run() {
+                final JSONArray output = new JSONArray();
+                CordovaActivity activity = (CordovaActivity) SugarizerOSPlugin.this.cordova.getActivity();
+                final String appPackageName = activity.getPackageName();
+                if (pm == null) {
+                    pm = activity.getPackageManager();
                 }
-                output.put(application);
+
+                HashSet<String> packageNames = getLauncherApps(pm);
+                for (String packageName : packageNames) {
+
+                    if (!appPackageName.equals(packageName)) {
+                        JSONObject application = new JSONObject();
+                        try {
+                            PackageInfo packageInfo = pm.getPackageInfo(packageName, 0);
+                            try {
+                                application.put("packageName", packageName);
+                                if (!packageNameToName.containsKey(packageName)) {
+                                    packageNameToName.put(packageName, (String) pm.getApplicationLabel(pm.getApplicationInfo(packageName, 0)));
+                                }
+                                application.put("name", packageNameToName.get(packageName));
+                                application.put("icon", IconCacheManager.getIcon(cordova.getActivity(), pm, packageName));
+                                application.put("version", packageInfo.versionName);
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        } catch (PackageManager.NameNotFoundException e) {
+                            e.printStackTrace();
+                        }
+                        output.put(application);
+                    }
+                }
+                cordova.getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        callbackContext.success(output);
+                    }
+                });
             }
-        }
-        callbackContext.success(output);
+        });
     }
 
 
@@ -194,6 +205,7 @@ public class SugarizerOSPlugin extends CordovaPlugin {
             this.runSettings(callbackContext);
         } else if (action.equals("apps")) {
             this.getApps(callbackContext, args.getInt(0));
+            return true;
         } else if (action.equals("scanWifi")) {
             SugarWifiManager.scanWifi(callbackContext, cordova.getActivity());
             return true;
@@ -209,23 +221,17 @@ public class SugarizerOSPlugin extends CordovaPlugin {
             SharedPreferencesManager.getInt(callbackContext, cordova.getActivity(), args.getString(0));
         } else if (action.equals("putInt")) {
             SharedPreferencesManager.putInt(cordova.getActivity(), args.getString(0), args.getInt(1));
-        }
-        else if (action.equals("disconnect")){
+        } else if (action.equals("disconnect")) {
             SugarWifiManager.disconnect(cordova.getActivity());
-        }
-        else if (action.equals("getLauncherPackageName")) {
+        } else if (action.equals("getLauncherPackageName")) {
             getDefaultLauncherPackageName(callbackContext);
-        }
-        else if (action.equals("isWifiEnabled")){
+        } else if (action.equals("isWifiEnabled")) {
             SugarWifiManager.isWifiEnabled(callbackContext, cordova.getActivity());
-        }
-        else if (action.equals("getKeyStore")){
+        } else if (action.equals("getKeyStore")) {
             SugarWifiManager.getKeyStore(callbackContext, cordova.getActivity());
-        }
-        else if (action.equals("setKey")){
+        } else if (action.equals("setKey")) {
             SugarWifiManager.setKey(callbackContext, cordova.getActivity(), args.getString(0), args.getString(1));
-        }
-        else if (action.equals("resetKeyStore")){
+        } else if (action.equals("resetKeyStore")) {
             SugarWifiManager.resetKeyStore(cordova.getActivity());
         }
         return false;
