@@ -17,7 +17,7 @@ import java.util.HashSet;
 
 public class IconCacheManager {
 
-    private static final HashSet<String> isIconCached = new HashSet<String>();
+    public static final HashSet<String> isIconCached = new HashSet<String>();
     private static File cacheDir = null;
 
     public static String getIcon(Context context, PackageManager packageManager, String packageName) {
