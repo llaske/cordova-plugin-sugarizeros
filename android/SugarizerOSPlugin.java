@@ -203,6 +203,11 @@ public class SugarizerOSPlugin extends CordovaPlugin {
             this.runActivity(callbackContext, args.getString(0));
         } else if (action.equals("runSettings")) {
             this.runSettings(callbackContext);
+        } else if (action.equals("isAppCacheReady")) {
+          JSONObject jsonObject = new JSONObject();
+          jsonObject.put("ready", !IconCacheManager.isIconCached.isEmpty() && !packageNameToName.isEmpty());
+          callbackContext.success(jsonObject);
+          return true;
         } else if (action.equals("apps")) {
             this.getApps(callbackContext, args.getInt(0));
             return true;
