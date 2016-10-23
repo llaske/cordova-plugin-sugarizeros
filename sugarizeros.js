@@ -84,7 +84,7 @@ sugarizerOS.init = function(){
 	console.log("SugarizerOS initialized");
 	sugarizerOS.getLauncherPackageName(function(value) {sugarizerOS.launcherPackageName = value;});
 	sugarizerOS.getKeyStore(function(value){sugarizerOS.keyStore = value;}, function(error){sugarizerOS.resetKeyStore();sugarizerOS.init();});
-	sugarizerOS.getInt(function(value){sugarizerOS.isSetup == (value == 1);}, null, "IS_SETUP"); 
+	sugarizerOS.getInt(function(value){sugarizerOS.isSetup == (value == 1);}, null, "IS_SETUP");
     }
     else{
 	console.log("No window to initialize sugarizerOS");
@@ -163,6 +163,10 @@ sugarizerOS.runSettings = function(){
     exec(null, null, "SugarizerOSPlugin", "runSettings", []);
 }
 
+sugarizerOS.isAppCacheReady = function(onSuccess) {
+    exec(onSuccess, null, "SugarizerOSPlugin", "isAppCacheReady", []);
+}
+
 sugarizerOS.applicationsToActivities = function(applications){
     var activities = [];
     for (i = 0; i < applications.length; i++){
@@ -234,9 +238,9 @@ sugarizerOS.initActivitiesPreferences = function(callback){
 	}
     }
 	, null, [0]);
-				      
+
 }
-    
+
 sugarizerOS.log = function(m){
     console.log(m);
 }
