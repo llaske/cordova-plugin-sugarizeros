@@ -8,7 +8,7 @@ sugarizerOS.networks = [];
 sugarizerOS.networkIconsCache = [];
 sugarizerOS.launches = -1;
 sugarizerOS.launcherPackageName = null;
-sugarizerOS.packageName = "org.olpcfrance.sugarizer";
+sugarizerOS.packageName = "org.olpc_france.sugarizer";
 sugarizerOS.appsCache = null;
 sugarizerOS.isSetup = false;
 

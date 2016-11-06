@@ -1,4 +1,4 @@
-package org.olpcfrance.sugarizer;
+package org.olpc_france.sugarizer;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
