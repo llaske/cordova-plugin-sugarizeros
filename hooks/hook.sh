@@ -1,2 +1,2 @@
 #!/bin/sh
-rm -f "platforms/android/src/org/olpcfrance/sugarizer/MainActivity.java"
+rm -fr "platforms/android/src/org/olpcfrance/"

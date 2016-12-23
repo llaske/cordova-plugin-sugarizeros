@@ -1,4 +1,5 @@
-package org.olpcfrance.sugarizer;
+package sugarizer.olpc_france.org.sugarizeroslibrary.applications.icons;
+
 
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -13,35 +14,42 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.HashSet;
 
-public class IconCacheManager {
+public class ApplicationIconFetcher {
 
-    public static final HashSet<String> isIconCached = new HashSet<String>();
     private static File cacheDir = null;
+    private Context mContext;
+    private PackageManager mPackageName;
+    private ApplicationIconCacher applicationIconCacher;
 
-    public static String getIcon(Context context, PackageManager packageManager, String packageName) {
+    public ApplicationIconFetcher(Context context, PackageManager packageManager) {
+        mContext = context;
+        mPackageName = packageManager;
+        applicationIconCacher = new ApplicationIconCacher();
+    }
+
+    public String getIcon(String packageName) {
 
         if (cacheDir == null) {
-            cacheDir = context.getCacheDir();
+            cacheDir = mContext.getCacheDir();
         }
 
-        if (isIconCached.contains(packageName)) {
+        if (applicationIconCacher.contains(packageName)) {
             return cacheDir + "/" + packageName + ".png";
         }
 
         try {
             File file = new File(cacheDir, packageName);
-            Drawable iconDrawable = packageManager.getApplicationIcon(packageName);
+            Drawable iconDrawable = mPackageName.getApplicationIcon(packageName);
             Bitmap bitmap = drawableToBitmap(iconDrawable);
-            return bitmapToFile(context, packageName, bitmap);
+            return bitmapToFile(mContext, packageName, bitmap);
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         }
         return "";
     }
 
-    public static String bitmapToFile(Context context, String filename, Bitmap bitmap) {
+    private String bitmapToFile(Context context, String filename, Bitmap bitmap) {
         if (cacheDir == null) {
             cacheDir = context.getCacheDir();
         }
@@ -61,7 +69,7 @@ public class IconCacheManager {
                 fos.write(bitmapdata);
                 fos.flush();
                 fos.close();
-                isIconCached.add(filename);
+                applicationIconCacher.add(filename);
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             }
@@ -81,7 +89,7 @@ public class IconCacheManager {
         return String.format("data:image/png;base64,%s", Base64.encodeToString(bitmapByte, Base64.DEFAULT));
     }
 
-    public static Bitmap drawableToBitmap(Drawable drawable) {
+    private static Bitmap drawableToBitmap(Drawable drawable) {
         Bitmap bitmap = null;
 
         if (drawable instanceof BitmapDrawable) {
@@ -91,7 +99,7 @@ public class IconCacheManager {
             }
         }
         if (drawable.getIntrinsicWidth() <= 0 || drawable.getIntrinsicHeight() <= 0) {
-            bitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888); // Single color bitmap will be created of 1x1 pixel
+            bitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
         } else {
             bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
         }
@@ -101,4 +109,5 @@ public class IconCacheManager {
         drawable.draw(canvas);
         return bitmap;
     }
+
 }

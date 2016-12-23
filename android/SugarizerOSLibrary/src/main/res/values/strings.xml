@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">SugarizerOSLibrary</string>
+    <string name="please_allow_permissions">Please allow permissions</string>
+</resources>
