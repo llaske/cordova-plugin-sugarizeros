@@ -1,4 +1,4 @@
-package org.olpcfrance.sugarizer;
+package org.olpc_france.sugarizer;
 
 import android.content.ComponentName;
 import android.content.Context;

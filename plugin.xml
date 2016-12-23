@@ -49,13 +49,12 @@
     
     <config-file target="config.xml" parent="/*">
       <feature name="SugarizerOSPlugin">
-	<param name="android-package" value="org.olpcfrance.sugarizer.SugarizerOSPlugin"/>
+	<param name="android-package" value="org.olpc_france.sugarizer.SugarizerOSPlugin"/>
       </feature>
     </config-file>
 
-
-    <source-file src="android/MainActivity.java" target-dir="src/org/olpcfrance/sugarizer"/>
-    <source-file src="android/SugarizerOSPlugin.java" target-dir="src/org/olpcfrance/sugarizer"/>
+    <source-file src="android/MainActivity.java" target-dir="src/org/olpc_france/sugarizer"/>
+    <source-file src="android/SugarizerOSPlugin.java" target-dir="src/org/olpc_france/sugarizer"/>
 
     <framework src="android/SugarizerOSLibrary" custom="true" />
   </platform>
