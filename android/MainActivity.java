@@ -19,10 +19,12 @@ under the License.
 
 package org.olpc_france.sugarizer;
 
+import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.media.AudioManager;
@@ -30,6 +32,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.support.v4.content.ContextCompat;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -37,10 +40,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
+import android.widget.Toast;
 
 import org.apache.cordova.CordovaActivity;
 
 import java.util.Locale;
+
+import sugarizer.olpc_france.org.sugarizeroslibrary.R;
 
 public class MainActivity extends CordovaActivity {
 
@@ -48,6 +54,24 @@ public class MainActivity extends CordovaActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        super.init();
+        loadUrl(launchUrl);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            Intent intent = new Intent();
+            intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+            Uri uri = Uri.fromParts("package", getPackageName(), null);
+            intent.setData(uri);
+            Toast.makeText(this, R.string.please_allow_permissions, Toast.LENGTH_SHORT).show();
+            startActivity(intent);
+        }
+
 
     }
 

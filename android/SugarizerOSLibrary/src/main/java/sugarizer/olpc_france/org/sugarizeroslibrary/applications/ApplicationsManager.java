@@ -26,6 +26,10 @@ public class ApplicationsManager {
         applicationCacher = new ApplicationCacher();
     }
 
+    public boolean hasCache() {
+        return applicationCacher.hasCache();
+    }
+
     public Observable<List<Application>> listApplications() {
         if (applicationCacher.hasCache()) {
             return Observable.from(applicationCacher.getApplications()).toList();

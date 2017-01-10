@@ -6,11 +6,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
-import android.net.Uri;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiInfo;
-import android.provider.Settings;
 import android.support.v4.content.ContextCompat;
 import android.widget.Toast;
 
@@ -38,11 +36,18 @@ public class WifiManager {
 
     public void startWifi() {
         wifiManager.setWifiEnabled(true);
-        wifiManager.disconnect();
     }
 
     public void disconnect() {
         wifiManager.disconnect();
+
+        Observable.from(wifiManager.getConfiguredNetworks())
+                .subscribe(new Action1<WifiConfiguration>() {
+                    @Override
+                    public void call(WifiConfiguration wifiConfiguration) {
+                        wifiManager.disableNetwork(wifiConfiguration.networkId);
+                    }
+                });
     }
 
     public void removeNetwork(final String SSID) {
@@ -66,7 +71,7 @@ public class WifiManager {
                 .filter(new Func1<WifiConfiguration, Boolean>() {
                     @Override
                     public Boolean call(WifiConfiguration wifiConfiguration) {
-                        return SSID.equals(wifiConfiguration.SSID) || ('"' + SSID + '"').equals(wifiConfiguration.SSID);
+                        return SSID.equals(wifiConfiguration.SSID) || ('"' + SSID + '"').equals(wifiConfiguration.SSID) || SSID.equals('"' + wifiConfiguration.SSID + '"');
                     }
                 })
                 .isEmpty()
@@ -81,24 +86,24 @@ public class WifiManager {
     public void saveNetwork(final String SSID, final String password, final boolean join) {
         removeNetwork(SSID);
 
-        getAPs().flatMap(new Func1<List<ScanResult>, Observable<?>>() {
+        getAPs().flatMap(new Func1<List<SugarScanResult>, Observable<?>>() {
             @Override
-            public Observable<?> call(List<ScanResult> scanResults) {
+            public Observable<?> call(List<SugarScanResult> scanResults) {
                 return Observable.from(scanResults);
             }
-        }).map(new Func1<Object, ScanResult>() {
+        }).map(new Func1<Object, SugarScanResult>() {
             @Override
-            public ScanResult call(Object o) {
-                return (ScanResult) o;
+            public SugarScanResult call(Object o) {
+                return (SugarScanResult) o;
             }
-        }).filter(new Func1<ScanResult, Boolean>() {
+        }).filter(new Func1<SugarScanResult, Boolean>() {
             @Override
-            public Boolean call(ScanResult scanResult) {
+            public Boolean call(SugarScanResult scanResult) {
                 return SSID.equals(scanResult.SSID);
             }
-        }).subscribe(new Action1<ScanResult>() {
+        }).subscribe(new Action1<SugarScanResult>() {
             @Override
-            public void call(ScanResult scanResult) {
+            public void call(SugarScanResult scanResult) {
                 saveNetwork(SSID, password, scanResult.capabilities, join);
             }
         });
@@ -156,8 +161,8 @@ public class WifiManager {
         return wifiManager.getConnectionInfo();
     }
 
-    private void startScan(final Subscriber<? super List<ScanResult>> subscriber) {
-        IntentFilter i = new IntentFilter();
+    private void startScan(final Subscriber<? super List<SugarScanResult>> subscriber) {
+        final IntentFilter i = new IntentFilter();
         i.addAction(android.net.wifi.WifiManager.SCAN_RESULTS_AVAILABLE_ACTION);
         mContext.registerReceiver(new BroadcastReceiver() {
             @Override
@@ -173,10 +178,20 @@ public class WifiManager {
                                     return scanResult.SSID;
                                 }
                             })
-                            .toList()
-                            .subscribe(new Action1<List<ScanResult>>() {
+                            .map(new Func1<ScanResult, SugarScanResult>() {
                                 @Override
-                                public void call(List<ScanResult> scanResults) {
+                                public SugarScanResult call(ScanResult scanResult) {
+                                    boolean isConnected = false;
+                                    if (isConnected()) {
+                                        isConnected = ('"' + scanResult.SSID + '"').equals(getCurrentNetwork().getSSID());
+                                    }
+                                    return new SugarScanResult(scanResult, isConnected);
+                                }
+                            })
+                            .toList()
+                            .subscribe(new Action1<List<SugarScanResult>>() {
+                                @Override
+                                public void call(List<SugarScanResult> scanResults) {
                                     subscriber.onNext(scanResults);
                                 }
                             });
@@ -191,21 +206,15 @@ public class WifiManager {
         wifiManager.setWifiEnabled(false);
     }
 
-    public Observable<List<ScanResult>> getAPs() {
+    public Observable<List<SugarScanResult>> getAPs() {
         if (ContextCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            Intent intent = new Intent();
-            intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-            Uri uri = Uri.fromParts("package", mContext.getPackageName(), null);
-            intent.setData(uri);
             Toast.makeText(mContext, R.string.please_allow_permissions, Toast.LENGTH_SHORT).show();
-            mContext.startActivity(intent);
-
             return Observable.empty();
         }
 
-        return Observable.create(new Observable.OnSubscribe<List<ScanResult>>() {
+        return Observable.create(new Observable.OnSubscribe<List<SugarScanResult>>() {
             @Override
-            public void call(Subscriber<? super List<ScanResult>> subscriber) {
+            public void call(Subscriber<? super List<SugarScanResult>> subscriber) {
                 startScan(subscriber);
             }
         });

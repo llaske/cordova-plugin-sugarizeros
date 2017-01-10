@@ -9,19 +9,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        /*
-        new ApplicationsManager(this).listApplications();
-
-        new WifiManager(this).startWifi();
-        new WifiManager(this).stopWifi();
-        new WifiManager(this).joinNetwork("toto");
-        new WifiManager(this).disconnect();
-        new WifiManager(this).getAPs();
-        */
-
-//        new LauncherCleanerManager(this).resetLauncher(true);
-
     }
 
     @Override
