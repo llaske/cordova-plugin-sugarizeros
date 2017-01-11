@@ -1,0 +1,3 @@
+include ':app'
+include ':SugarizerOSLibrary'
+project(':SugarizerOSLibrary').projectDir = new File(settingsDir, '../SugarizerOSLibrary')

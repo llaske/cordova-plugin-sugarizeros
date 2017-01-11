@@ -1,4 +1,4 @@
-package org.olpcfrance.sugarizer;
+package org.olpc_france.sugarizer;
 
 import android.content.ComponentName;
 import android.content.Context;
@@ -9,6 +9,8 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.provider.Settings;
+
+import com.google.gson.Gson;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaActivity;
@@ -22,8 +24,24 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
+import rx.functions.Action1;
+import sugarizer.olpc_france.org.sugarizeroslibrary.applications.Application;
+import sugarizer.olpc_france.org.sugarizeroslibrary.applications.ApplicationsManager;
+import sugarizer.olpc_france.org.sugarizeroslibrary.launcher.LauncherCleanerManager;
+import sugarizer.olpc_france.org.sugarizeroslibrary.network.SugarScanResult;
+import sugarizer.olpc_france.org.sugarizeroslibrary.network.WifiManager;
+
 public class SugarizerOSPlugin extends CordovaPlugin {
     private PackageManager pm;
+    private ApplicationsManager applicationsManager;
+    private LauncherCleanerManager launcherCleanerManager;
+    private WifiManager wifiManager;
+
+    protected void pluginInitialize() {
+        applicationsManager = new ApplicationsManager(cordova.getActivity());
+        launcherCleanerManager = new LauncherCleanerManager(cordova.getActivity());
+        wifiManager = new WifiManager(cordova.getActivity());
+    }
 
     private void getDefaultLauncherPackageName(CallbackContext callbackContext) {
         callbackContext.success(getDefaultLauncherPackageName(pm));
@@ -42,89 +60,11 @@ public class SugarizerOSPlugin extends CordovaPlugin {
         return getDefaultLauncherPackageName(packageManager).equals(appContext.getPackageName());
     }
 
-    private HashSet<String> getLauncherApps(PackageManager packageManager) {
-        Intent intent = new Intent(Intent.ACTION_MAIN, null);
-        intent.addCategory(Intent.CATEGORY_LAUNCHER);
-        List<ResolveInfo> resInfos = packageManager.queryIntentActivities(intent, 0);
-        HashSet<String> packageNames = new HashSet<String>(0);
-
-        for (ResolveInfo resolveInfo : resInfos) {
-            packageNames.add(resolveInfo.activityInfo.packageName);
-        }
-        return packageNames;
-    }
-
-    private static final HashMap<String, String> packageNameToName = new HashMap<String, String>();
-
-    private void getApps(final CallbackContext callbackContext, int flags) {
-        cordova.getThreadPool().execute(new Runnable() {
-            @Override
-            public void run() {
-                final JSONArray output = new JSONArray();
-                CordovaActivity activity = (CordovaActivity) SugarizerOSPlugin.this.cordova.getActivity();
-                final String appPackageName = activity.getPackageName();
-                if (pm == null) {
-                    pm = activity.getPackageManager();
-                }
-
-                HashSet<String> packageNames = getLauncherApps(pm);
-                for (String packageName : packageNames) {
-
-                    if (!appPackageName.equals(packageName)) {
-                        JSONObject application = new JSONObject();
-                        try {
-                            PackageInfo packageInfo = pm.getPackageInfo(packageName, 0);
-                            try {
-                                application.put("packageName", packageName);
-                                if (!packageNameToName.containsKey(packageName)) {
-                                    packageNameToName.put(packageName, (String) pm.getApplicationLabel(pm.getApplicationInfo(packageName, 0)));
-                                }
-                                application.put("name", packageNameToName.get(packageName));
-                                application.put("icon", IconCacheManager.getIcon(cordova.getActivity(), pm, packageName));
-                                application.put("version", packageInfo.versionName);
-                            } catch (JSONException e) {
-                                e.printStackTrace();
-                            }
-                        } catch (PackageManager.NameNotFoundException e) {
-                            e.printStackTrace();
-                        }
-                        output.put(application);
-                    }
-                }
-                cordova.getActivity().runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        callbackContext.success(output);
-                    }
-                });
-            }
-        });
-    }
-
-
-    private ComponentName resetDefaultLauncherSettings(Context context) {
-
-
-        if (pm == null) pm = context.getPackageManager();
-        ComponentName mockupComponent = new ComponentName(MainActivity.class.getPackage().getName(), FakeLauncherActivity.class.getName());
-
-        pm.setComponentEnabledSetting(mockupComponent, PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP);
-
-        Intent startMain = new Intent(Intent.ACTION_MAIN);
-        startMain.addCategory(Intent.CATEGORY_HOME);
-        startMain.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        context.startActivity(startMain);
-
-        pm.setComponentEnabledSetting(mockupComponent, PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
-        return mockupComponent;
-    }
-
     private void runSettings(CallbackContext callbackContext) {
         cordova.getActivity().startActivity(
                 new Intent(Settings.ACTION_SETTINGS));
         callbackContext.success();
     }
-
 
     private void runActivity(CallbackContext callbackContext, String packageName) {
         if (pm == null) {
@@ -158,24 +98,6 @@ public class SugarizerOSPlugin extends CordovaPlugin {
         context.startActivity(startMain);
     }
 
-    private void chooseLauncher(CallbackContext callbackContext, Context appContext, boolean reset) {
-        boolean isDefault = isMyAppLauncherDefault(appContext, pm);
-        if (reset) {
-            ComponentName componentName = resetDefaultLauncherSettings(appContext);
-            //			pm.setComponentEnabledSetting(componentName, PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP);
-        }
-        if (isDefault) {
-            pm.clearPackagePreferredActivities(appContext.getPackageName());
-            //			pm.clearPackagePreferredActivities(getDefaultLauncherPackageName(appContext, pm));
-        }
-        openChooseLauncherPopup(appContext);
-        if (reset && isDefault == isMyAppLauncherDefault(appContext, pm)) {
-            openAppSettings(appContext);
-        }
-        callbackContext.success();
-        ((MainActivity) appContext).finish();
-    }
-
     private void isMyAppLauncherDefault(CallbackContext callbackContext, Context appContext) {
         final IntentFilter filter = new IntentFilter(Intent.ACTION_MAIN);
         final String myPackageName = appContext.getPackageName();
@@ -198,46 +120,86 @@ public class SugarizerOSPlugin extends CordovaPlugin {
     }
 
     @Override
-    public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
+    public boolean execute(String action, JSONArray args, final CallbackContext callbackContext) throws JSONException {
         if (action.equals("runActivity")) {
             this.runActivity(callbackContext, args.getString(0));
         } else if (action.equals("runSettings")) {
             this.runSettings(callbackContext);
         } else if (action.equals("isAppCacheReady")) {
-          JSONObject jsonObject = new JSONObject();
-          jsonObject.put("ready", !IconCacheManager.isIconCached.isEmpty() && !packageNameToName.isEmpty());
-          callbackContext.success(jsonObject);
-          return true;
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("ready", applicationsManager.hasCache());
+            callbackContext.success(jsonObject);
+
+            return true;
         } else if (action.equals("apps")) {
-            this.getApps(callbackContext, args.getInt(0));
+            applicationsManager.listApplications()
+                    .subscribe(new Action1<List<Application>>() {
+                        @Override
+                        public void call(List<Application> applications) {
+                            callbackContext.success(new Gson().toJson(applications));
+                        }
+                    });
+
             return true;
         } else if (action.equals("scanWifi")) {
-            SugarWifiManager.scanWifi(callbackContext, cordova.getActivity());
+            if (!wifiManager.isEnabled()) {
+                wifiManager.startWifi();
+            }
+
+            wifiManager.getAPs()
+                    .subscribe(new Action1<List<SugarScanResult>>() {
+                        @Override
+                        public void call(List<SugarScanResult> scanResults) {
+                            callbackContext.success(new Gson().toJson(scanResults));
+                        }
+                    });
             return true;
         } else if (action.equals("isDefaultLauncher")) {
             this.isMyAppLauncherDefault(callbackContext, cordova.getActivity());
         } else if (action.equals("chooseLauncher")) {
-            this.chooseLauncher(callbackContext, cordova.getActivity(), true);
+            launcherCleanerManager.resetLauncher(true);
         } else if (action.equals("selectLauncher")) {
-            this.chooseLauncher(callbackContext, cordova.getActivity(), false);
+            launcherCleanerManager.resetLauncher(false);
         } else if (action.equals("joinNetwork")) {
-            SugarWifiManager.joinNetwork(args.getString(0), args.getString(1), args.getString(2), cordova.getActivity());
-        } else if (action.equals("getInt")) {
-            SharedPreferencesManager.getInt(callbackContext, cordova.getActivity(), args.getString(0));
+            wifiManager.joinNetwork(args.getString(0));
+        } else if (action.equals("isKnownNetwork")) {
+            wifiManager.isKnownNetwork(args.getString(0))
+                    .subscribe(new Action1<Boolean>() {
+                        @Override
+                        public void call(Boolean aBoolean) {
+                            callbackContext.success(aBoolean ? 1 : 0);
+                        }
+                    });
+        }
+
+        //fixme
+        else if (action.equals("getInt")) {
+            callbackContext.success(42);
+//            SharedPreferencesManager.getInt(callbackContext, cordova.getActivity(), args.getString(0));
         } else if (action.equals("putInt")) {
-            SharedPreferencesManager.putInt(cordova.getActivity(), args.getString(0), args.getInt(1));
+//            SharedPreferencesManager.putInt(cordova.getActivity(), args.getString(0), args.getInt(1));
         } else if (action.equals("disconnect")) {
-            SugarWifiManager.disconnect(cordova.getActivity());
+            wifiManager.disconnect();
         } else if (action.equals("getLauncherPackageName")) {
             getDefaultLauncherPackageName(callbackContext);
         } else if (action.equals("isWifiEnabled")) {
-            SugarWifiManager.isWifiEnabled(callbackContext, cordova.getActivity());
-        } else if (action.equals("getKeyStore")) {
-            SugarWifiManager.getKeyStore(callbackContext, cordova.getActivity());
-        } else if (action.equals("setKey")) {
-            SugarWifiManager.setKey(callbackContext, cordova.getActivity(), args.getString(0), args.getString(1));
-        } else if (action.equals("resetKeyStore")) {
-            SugarWifiManager.resetKeyStore(cordova.getActivity());
+            callbackContext.success(wifiManager.isEnabled() ? 1 : 0);
+            return true;
+        } else if (action.equals("getWifiSSID")) {
+            String ssid = wifiManager.getCurrentNetwork().getSSID();
+            ssid = ssid.substring(1, ssid.length() - 1);
+            callbackContext.success(ssid);
+            return true;
+        }
+        else if (action.equals("forgetNetwork")) {
+            wifiManager.removeNetwork(args.getString(0));
+        }
+        else if (action.equals("setKey")) {
+            boolean autoLogin = false;
+            if (args.length() == 3) {
+                autoLogin = args.getBoolean(2);
+            }
+            wifiManager.saveNetwork(args.getString(0), args.getString(1), autoLogin);
         }
         return false;
     }

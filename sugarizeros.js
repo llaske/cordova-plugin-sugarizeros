@@ -8,158 +8,164 @@ sugarizerOS.networks = [];
 sugarizerOS.networkIconsCache = [];
 sugarizerOS.launches = -1;
 sugarizerOS.launcherPackageName = null;
-sugarizerOS.packageName = "org.olpcfrance.sugarizer";
+sugarizerOS.packageName = "org.olpc_france.sugarizer";
 sugarizerOS.appsCache = null;
 sugarizerOS.isSetup = false;
 
-sugarizerOS.addApplicationToJournal = function (callback, application, datastore) {
+sugarizerOS.addApplicationToJournal = function(callback, application, datastore) {
     var mimetype = "text/plain";
     var type = mimetype.split("/")[0];
     var metadata = {
-	mimetype: mimetype,
-	title: application.name,
-	activity: application.id,
-	timestamp: new Date().getTime(),
-	creation_time: new Date().getTime(),
-	file_size: 0,
-	icon: application.icon
+        mimetype: mimetype,
+        title: application.name,
+        activity: application.id,
+        timestamp: new Date().getTime(),
+        creation_time: new Date().getTime(),
+        file_size: 0,
+        icon: application.icon
     };
     datastore.create(metadata, callback, null);
 }
 
-sugarizerOS.addNetworkIconToCache = function(icon){
-    if (!sugarizerOS.getNetworkIconFromCache(icon.BSSID)){
-	sugarizerOS.networkIconsCache.push(icon);
+sugarizerOS.addNetworkIconToCache = function(icon) {
+    if (!sugarizerOS.getNetworkIconFromCache(icon.BSSID)) {
+        sugarizerOS.networkIconsCache.push(icon);
     }
 }
 
-sugarizerOS.disconnectWifi = function(){
-    exec(null,null, "SugarizerOSPlugin", "disconnect", []);
+sugarizerOS.clearNetworkIconCache = function() {
+    sugarizerOS.networkIconsCache = [];
 }
 
-sugarizerOS.getWifiSSID = function(onSuccess){
+sugarizerOS.disconnectWifi = function() {
+    exec(null, null, "SugarizerOSPlugin", "disconnect", []);
+}
+
+sugarizerOS.isKnownNetwork = function(ssid, onSuccess) {
+    exec(onSuccess, null, "SugarizerOSPlugin", "isKnownNetwork", [ssid]);
+}
+
+sugarizerOS.getWifiSSID = function(onSuccess) {
     exec(onSuccess, null, "SugarizerOSPlugin", "getWifiSSID", []);
 }
 
-sugarizerOS.isWifiEnabled = function(onSuccess, onFailure){
+sugarizerOS.isWifiEnabled = function(onSuccess, onFailure) {
     exec(onSuccess, onFailure, "SugarizerOSPlugin", "isWifiEnabled", []);
 }
 
-sugarizerOS.getLauncherPackageName = function(onSuccess, onFailure){
+sugarizerOS.getLauncherPackageName = function(onSuccess, onFailure) {
     exec(onSuccess, onFailure, "SugarizerOSPlugin", "getLauncherPackageName", []);
 }
 
-sugarizerOS.getNetworkIconFromCache = function(BSSID){
-    for (var i = 0;i < sugarizerOS.networkIconsCache.length; i++){
-	if (sugarizerOS.networkIconsCache[i].BSSID == BSSID)
-	    return sugarizerOS.networkIconsCache[i];
+sugarizerOS.getNetworkIconFromCache = function(BSSID) {
+    for (var i = 0; i < sugarizerOS.networkIconsCache.length; i++) {
+        if (sugarizerOS.networkIconsCache[i].BSSID == BSSID)
+            return sugarizerOS.networkIconsCache[i];
     }
 }
 
-sugarizerOS.setApplicationsLoaded = function(value){
+sugarizerOS.setApplicationsLoaded = function(value) {
     sugarizerOS.applicationsLoaded = true;
 }
 
-sugarizerOS.getEncryptionString = function(capabilities){
+sugarizerOS.getEncryptionString = function(capabilities) {
     var WEP = "[WEP"
     var WPA2 = "[WPA2"
     var WPA = "[WPA"
     if (capabilities.indexOf(WEP) != -1)
-	return "WEP";
+        return "WEP";
     else if (capabilities.indexOf(WPA2) != -1)
-	return "WPA2";
+        return "WPA2";
     else if (capabilities.indexOf(WPA) != -1)
-	return "WPA";
+        return "WPA";
     return "OPEN";
 }
 
-sugarizerOS.joinNetwork = function(SSID, pass, capabilities, onSuccess, onFailure){
-    exec(onSuccess, onFailure, "SugarizerOSPlugin", "joinNetwork", [SSID, pass, capabilities]);
+sugarizerOS.joinNetwork = function(SSID, onSuccess, onFailure) {
+    exec(onSuccess, onFailure, "SugarizerOSPlugin", "joinNetwork", [SSID]);
 }
 
-sugarizerOS.init = function(){
-    if (window){
-	window.sugarizerOS = sugarizerOS;
-	sugarizerOS.checkIfDefaultLauncher();
-	console.log("SugarizerOS initialized");
-	sugarizerOS.getLauncherPackageName(function(value) {sugarizerOS.launcherPackageName = value;});
-	sugarizerOS.getKeyStore(function(value){sugarizerOS.keyStore = value;}, function(error){sugarizerOS.resetKeyStore();sugarizerOS.init();});
-	sugarizerOS.getInt(function(value){sugarizerOS.isSetup == (value == 1);}, null, "IS_SETUP");
+sugarizerOS.init = function() {
+    if (window) {
+        window.sugarizerOS = sugarizerOS;
+        sugarizerOS.checkIfDefaultLauncher();
+        console.log("SugarizerOS initialized");
+        sugarizerOS.getLauncherPackageName(function(value) {
+            sugarizerOS.launcherPackageName = value;
+        });
+        sugarizerOS.getInt(function(value) {
+            sugarizerOS.isSetup == (value == 1);
+        }, null, "IS_SETUP");
+    } else {
+        console.log("No window to initialize sugarizerOS");
     }
-    else{
-	console.log("No window to initialize sugarizerOS");
-    }
 }
 
-sugarizerOS.resetKeyStore = function(){
-    exec(null, null, "SugarizerOSPlugin", "resetKeyStore", []);
+sugarizerOS.setKey = function(SSID, key, autologin, onSuccess, onFailure) {
+    exec(onSuccess, onFailure, "SugarizerOSPlugin", "setKey", [SSID, key, autologin]);
 }
 
-sugarizerOS.getKeyStore = function(onSuccess, onFailure){
-    exec(onSuccess, onFailure, "SugarizerOSPlugin", "getKeyStore", []);
+sugarizerOS.forgetNetwork = function(SSID) {
+    exec(null, null, "SugarizerOSPlugin", "forgetNetwork", [SSID]);
 }
 
-sugarizerOS.setKey = function(SSID, key, onSuccess, onFailure){
-    exec(onSuccess, onFailure, "SugarizerOSPlugin", "setKey", [SSID, key]);
-}
-
-sugarizerOS.selectLauncher = function(){
+sugarizerOS.selectLauncher = function() {
     exec(null, null, "SugarizerOSPlugin", "selectLauncher", []);
 }
 
-sugarizerOS.getInt = function(onSuccess, onFailure, tag){
+sugarizerOS.getInt = function(onSuccess, onFailure, tag) {
     exec(onSuccess, onFailure, "SugarizerOSPlugin", "getInt", [tag])
 }
 
-sugarizerOS.resetLaunchesLauncher = function(){
+sugarizerOS.resetLaunchesLauncher = function() {
     sugarizerOS.putInt("LAUNCHES", 0);
 }
 
-sugarizerOS.putInt = function(tag, value, onSuccess, onFailure){
+sugarizerOS.putInt = function(tag, value, onSuccess, onFailure) {
     exec(onSuccess, onFailure, "SugarizerOSPlugin", "putInt", [tag, value])
 }
 
-sugarizerOS.chooseLauncher = function(){
+sugarizerOS.chooseLauncher = function() {
     exec(null, null, "SugarizerOSPlugin", "chooseLauncher", []);
 }
 
-sugarizerOS.checkIfDefaultLauncher = function(){
+sugarizerOS.checkIfDefaultLauncher = function() {
     exec(sugarizerOS.setIsDefaultLauncher, null, "SugarizerOSPlugin", "isDefaultLauncher", []);
-    sugarizerOS.getInt(function(value){sugarizerOS.launches = value;}, null, "LAUNCHES");
+    sugarizerOS.getInt(function(value) {
+        sugarizerOS.launches = value;
+    }, null, "LAUNCHES");
 }
 
-sugarizerOS.getIsDefaultLauncher = function(onSuccess, onFailure){
+sugarizerOS.getIsDefaultLauncher = function(onSuccess, onFailure) {
     exec(onSuccess, onFailure, "SugarizerOSPlugin", "isDefaultLauncher", []);
 }
 
-sugarizerOS.setIsDefaultLauncher = function(value){
+sugarizerOS.setIsDefaultLauncher = function(value) {
     if (value)
-	sugarizerOS.isDefaultLauncher = true;
+        sugarizerOS.isDefaultLauncher = true;
     else
-	sugarizerOS.isDefaultLauncher = false;
+        sugarizerOS.isDefaultLauncher = false;
 }
 
-sugarizerOS.echo = function(onSuccess, onFailure, string){
+sugarizerOS.echo = function(onSuccess, onFailure, string) {
     exec(onSuccess, onFailure, "SugarizerOSPlugin", "echo", string);
 }
 
-sugarizerOS.getAndroidApplications = function(onSuccess, onFailure, flags){
+sugarizerOS.getAndroidApplications = function(onSuccess, onFailure, flags) {
     exec(onSuccess, onFailure, "SugarizerOSPlugin", "apps", flags);
 }
 
-sugarizerOS.updateNetworks = function(networks){
-    sugarizerOS.networks = networks;
+sugarizerOS.scanWifi = function() {
+    exec(function(networks) {
+        sugarizerOS.networks = JSON.parse(networks);
+    }, null, "SugarizerOSPlugin", "scanWifi", []);
 }
 
-sugarizerOS.scanWifi = function(){
-    exec(sugarizerOS.updateNetworks, null, "SugarizerOSPlugin", "scanWifi", []);
-}
-
-sugarizerOS.runActivity = function(packageName){
+sugarizerOS.runActivity = function(packageName) {
     exec(null, null, "SugarizerOSPlugin", "runActivity", [packageName])
 }
 
-sugarizerOS.runSettings = function(){
+sugarizerOS.runSettings = function() {
     exec(null, null, "SugarizerOSPlugin", "runSettings", []);
 }
 
@@ -167,81 +173,79 @@ sugarizerOS.isAppCacheReady = function(onSuccess) {
     exec(onSuccess, null, "SugarizerOSPlugin", "isAppCacheReady", []);
 }
 
-sugarizerOS.applicationsToActivities = function(applications){
+sugarizerOS.applicationsToActivities = function(applications) {
     var activities = [];
-    for (i = 0; i < applications.length; i++){
-	activities.push({
-	    activityId: null,
-	    directory: null,
-	    favorite: false,
-	    icon: applications[i].icon,
-	    id: applications[i].packageName,
-	    instances: [],
-	    name: applications[i].name,
-	    version: applications[i].version,
-	    type: "native"});
+    for (i = 0; i < applications.length; i++) {
+        activities.push({
+            activityId: null,
+            directory: null,
+            favorite: false,
+            icon: applications[i].icon,
+            id: applications[i].packageName,
+            instances: [],
+            name: applications[i].name,
+            version: applications[i].version,
+            type: "native"
+        });
     }
     return activities;
 }
 
-sugarizerOS.getAppIndex = function(item, list){
-    for (var i = 0; i < list.length; i++){
-	if (list[i].id == item.id)
-	    return i;
+sugarizerOS.getAppIndex = function(item, list) {
+    for (var i = 0; i < list.length; i++) {
+        if (list[i].id == item.id)
+            return i;
     }
     return -1;
 }
 
-sugarizerOS.initActivitiesPreferences = function(callback){
-    sugarizerOS.getAndroidApplications(function(applications){
-	if (applications != sugarizerOS.appsCache){
-	    sugarizerOS.appsCache = applications;
-	applications = sugarizerOS.applicationsToActivities(applications);
-	var activities = preferences.getActivities();
+sugarizerOS.initActivitiesPreferences = function(callback) {
+    sugarizerOS.getAndroidApplications(function(applications) {
+        applications = JSON.parse(applications);
+        if (applications != sugarizerOS.appsCache) {
+            sugarizerOS.appsCache = applications;
+            applications = sugarizerOS.applicationsToActivities(applications);
+            var activities = preferences.getActivities();
 
-	for (var i = 0; i < applications.length; i++){
-	    var index = sugarizerOS.getAppIndex(applications[i], activities);
-	    if (index == -1)
-		activities.push(applications[i])
-	}
-	var apps = [];
-	for (var i = 0; i < activities.length; i++){
-	    if (activities[i].type && activities[i].type == "native")
-	    {
-		if (sugarizerOS.getAppIndex(activities[i], applications) == -1)
-		    continue;
-		apps.push(activities[i]);
-	    }
-	    else
-		apps.push(activities[i]);
-	}
-	var nonNative = [];
-	var nativeApps = [];
+            for (var i = 0; i < applications.length; i++) {
+                var index = sugarizerOS.getAppIndex(applications[i], activities);
+                if (index == -1)
+                    activities.push(applications[i])
+            }
+            var apps = [];
+            for (var i = 0; i < activities.length; i++) {
+                if (activities[i].type && activities[i].type == "native") {
+                    if (sugarizerOS.getAppIndex(activities[i], applications) == -1)
+                        continue;
+                    apps.push(activities[i]);
+                } else
+                    apps.push(activities[i]);
+            }
+            var nonNative = [];
+            var nativeApps = [];
 
-	for (var i = 0; i < apps.length; i++)
-	{
-	    if (apps[i].type && apps[i].type == "native")
-		nativeApps.push(apps[i]);
-	    else
-		nonNative.push(apps[i]);
-	}
+            for (var i = 0; i < apps.length; i++) {
+                if (apps[i].type && apps[i].type == "native")
+                    nativeApps.push(apps[i]);
+                else
+                    nonNative.push(apps[i]);
+            }
 
-	nativeApps.sort(function(a, b){
-	    return a.name.localeCompare(b.name);
-	});
-	nonNative.sort(function(a,b){
-	    return a.name.localeCompare(b.name);
-	});
-	preferences.setActivities(nonNative.concat(nativeApps));
-	if (callback)
-	    callback();
-	}
-    }
-	, null, [0]);
+            nativeApps.sort(function(a, b) {
+                return a.name.localeCompare(b.name);
+            });
+            nonNative.sort(function(a, b) {
+                return a.name.localeCompare(b.name);
+            });
+            preferences.setActivities(nonNative.concat(nativeApps));
+            if (callback)
+                callback();
+        }
+    }, null, [0]);
 
 }
 
-sugarizerOS.log = function(m){
+sugarizerOS.log = function(m) {
     console.log(m);
 }
 
