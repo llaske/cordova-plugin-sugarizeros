@@ -221,23 +221,12 @@ sugarizerOS.initActivitiesPreferences = function(callback) {
                 } else
                     apps.push(activities[i]);
             }
-            var nonNative = [];
-            var nativeApps = [];
 
-            for (var i = 0; i < apps.length; i++) {
-                if (apps[i].type && apps[i].type == "native")
-                    nativeApps.push(apps[i]);
-                else
-                    nonNative.push(apps[i]);
-            }
-
-            nativeApps.sort(function(a, b) {
+            apps.sort(function(a, b) {
                 return a.name.localeCompare(b.name);
             });
-            nonNative.sort(function(a, b) {
-                return a.name.localeCompare(b.name);
-            });
-            preferences.setActivities(nonNative.concat(nativeApps));
+            
+            preferences.setActivities(apps);
             if (callback)
                 callback();
         }
