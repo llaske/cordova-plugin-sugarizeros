@@ -8,7 +8,7 @@ sugarizerOS.networks = [];
 sugarizerOS.networkIconsCache = [];
 sugarizerOS.launches = -1;
 sugarizerOS.launcherPackageName = null;
-sugarizerOS.packageName = "org.olpc_france.sugarizer";
+sugarizerOS.packageName = "org.olpc_france.sugarizeros";
 sugarizerOS.appsCache = null;
 sugarizerOS.isSetup = false;
 
@@ -225,7 +225,7 @@ sugarizerOS.initActivitiesPreferences = function(callback) {
             apps.sort(function(a, b) {
                 return a.name.localeCompare(b.name);
             });
-            
+
             preferences.setActivities(apps);
             if (callback)
                 callback();
