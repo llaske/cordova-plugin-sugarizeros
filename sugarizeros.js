@@ -24,7 +24,7 @@ sugarizerOS.addApplicationToJournal = function(callback, application, datastore)
         file_size: 0,
         icon: application.icon
     };
-    datastore.create(metadata, callback, null);
+    datastore.create(metadata, callback);
 }
 
 sugarizerOS.addNetworkIconToCache = function(icon) {
