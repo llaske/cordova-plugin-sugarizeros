@@ -41,6 +41,7 @@ public class SugarizerOSPlugin extends CordovaPlugin {
         applicationsManager = new ApplicationsManager(cordova.getActivity());
         launcherCleanerManager = new LauncherCleanerManager(cordova.getActivity());
         wifiManager = new WifiManager(cordova.getActivity());
+        pm = cordova.getActivity().getPackageManager();
     }
 
     private void getDefaultLauncherPackageName(CallbackContext callbackContext) {
@@ -67,10 +68,6 @@ public class SugarizerOSPlugin extends CordovaPlugin {
     }
 
     private void runActivity(CallbackContext callbackContext, String packageName) {
-        if (pm == null) {
-            CordovaActivity activity = (CordovaActivity) this.cordova.getActivity();
-            pm = activity.getPackageManager();
-        }
         Intent LaunchIntent = pm.getLaunchIntentForPackage(packageName);
         this.cordova.getActivity().startActivity(LaunchIntent);
         callbackContext.success();
@@ -107,8 +104,6 @@ public class SugarizerOSPlugin extends CordovaPlugin {
         filters.add(filter);
 
         List<ComponentName> activities = new ArrayList<ComponentName>();
-        if (pm == null)
-            pm = appContext.getPackageManager();
 
         pm.getPreferredActivities(filters, activities, null);
         for (ComponentName activity : activities) {
