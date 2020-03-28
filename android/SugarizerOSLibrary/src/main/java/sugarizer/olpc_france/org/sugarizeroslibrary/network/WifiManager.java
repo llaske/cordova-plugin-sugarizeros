@@ -207,7 +207,7 @@ public class WifiManager {
     }
 
     public Observable<List<SugarScanResult>> getAPs() {
-        if (ContextCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_WIFI_STATE) != PackageManager.PERMISSION_GRANTED) {
             Toast.makeText(mContext, R.string.please_allow_permissions, Toast.LENGTH_SHORT).show();
             return Observable.empty();
         }
