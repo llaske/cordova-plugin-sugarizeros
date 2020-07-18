@@ -50,13 +50,19 @@ import sugarizer.olpc_france.org.sugarizeroslibrary.R;
 
 public class MainActivity extends CordovaActivity {
 
+    // Set to true to force auto logoff on Sugarizer session at the end of Sugarizer OS
+    static final boolean AUTO_LOGOFF = false;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         super.init();
-        loadUrl(launchUrl);
+        if (AUTO_LOGOFF) {
+            loadUrl(launchUrl+"?rst=2");
+        } else {
+            loadUrl(launchUrl);
+        }
     }
 
     @Override
