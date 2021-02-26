@@ -17,7 +17,7 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package org.olpc_france.sugarizer;
+package org.olpc_france.sugarizeros;
 
 import android.Manifest;
 import android.annotation.TargetApi;

@@ -16,14 +16,14 @@
   </js-module>
 
   <platform name="android">
-    <hook type="before_plugin_install" src="hooks/hook.sh" />
+    <hook type="after_plugin_install" src="hooks/hook.sh" />
 
     <config-file target="AndroidManifest.xml" parent="/manifest">
       <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
       <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
       <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
     </config-file>
-    
+
     <config-file target="AndroidManifest.xml" parent="/manifest/application">
       <activity
 	  android:name="sugarizer.olpc_france.org.sugarizeroslibrary.launcher.FakeLauncherActivity"
@@ -34,9 +34,9 @@
 	  <category android:name="android.intent.category.HOME" />
 	  <category android:name="android.intent.category.DEFAULT" />
 	</intent-filter>
-      </activity>      
+      </activity>
     </config-file>
-    
+
     <config-file target="AndroidManifest.xml" parent="/manifest/application/activity">
       <intent-filter>
 	<action android:name="android.intent.action.MAIN" />
@@ -45,15 +45,15 @@
 	<category android:name="android.intent.category.DEFAULT" />
       </intent-filter>
     </config-file>
-    
+
     <config-file target="config.xml" parent="/*">
       <feature name="SugarizerOSPlugin">
 	<param name="android-package" value="org.olpc_france.sugarizer.SugarizerOSPlugin"/>
       </feature>
     </config-file>
 
-    <source-file src="android/MainActivity.java" target-dir="src/org/olpc_france/sugarizer"/>
-    <source-file src="android/SugarizerOSPlugin.java" target-dir="src/org/olpc_france/sugarizer"/>
+    <source-file src="android/MainActivity.java" target-dir="src/main/java/org/olpc_france/sugarizer"/>
+    <source-file src="android/SugarizerOSPlugin.java" target-dir="src/main/java/org/olpc_france/sugarizer"/>
 
     <framework src="android/SugarizerOSLibrary" custom="true" />
   </platform>
